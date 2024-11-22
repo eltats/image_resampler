@@ -8,6 +8,7 @@
 ### Требования
 
 **Docker**: Убедитесь, что у вас установлен Docker. Скачать его можно с [сайта Docker](https://www.docker.com/products/docker-desktop/).
+
 **Go 1.21+**: Для локального запуска
 
 
