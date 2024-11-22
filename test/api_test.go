@@ -1,0 +1,52 @@
+package test
+
+import (
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"image_resampler/internal/api"
+	"image_resampler/internal/config"
+)
+
+// test invalid image, valid image, cached image (same os old and new one)
+func TestProcessImage(t *testing.T) {
+	cfg := &config.Config{
+		OrigDir: "/tmp/test_orig",
+		ResDir:  "/tmp/test_res",
+		Width:   200,
+		Height:  200,
+	}
+
+	router := api.NewRouter(cfg)
+
+	tests := []struct {
+		name       string
+		payload    string
+		statusCode int
+	}{
+		{
+			name:       "Valid Image",
+			payload:    `{"image":"data:image/jpeg;base64,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"}`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "Invalid Payload",
+			payload:    `{"invalid":"payload"}`,
+			statusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range tests {
+		req := httptest.NewRequest(http.MethodPost, "/process", bytes.NewBufferString(test.payload))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != test.statusCode {
+			t.Errorf("Test %s failed: expected %d, got %d. Error: %s", test.name, test.statusCode, rec.Code, rec.Body.String())
+		}
+	}
+}
